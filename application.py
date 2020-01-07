@@ -5,9 +5,14 @@ from flask_sqlalchemy import SQLAlchemy
 
 application = Flask(__name__)
 
-DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:////tmp/flask_application.db')
+driver = 'mysql+pymysql://'
+driver = 'postgresql+psycopg2://'
 
-application.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+application.config['SQLALCHEMY_DATABASE_URI'] = driver \
+                                        + os.environ['RDS_USERNAME'] + ':' + os.environ['RDS_PASSWORD'] \
+                                        +'@' + os.environ['RDS_HOSTNAME']  +  ':' + os.environ['RDS_PORT'] \
+                                        + '/' + os.environ['RDS_DB_NAME']
+
 db = SQLAlchemy(application)
 
 
