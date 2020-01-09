@@ -5,18 +5,21 @@ from flask_sqlalchemy import SQLAlchemy
 
 application = Flask(__name__)
 
-driver = 'mysql+pymysql://'
-driver = 'postgresql+psycopg2://'
+#Grab postgres info from RDS env vars
+HOSTNAME = os.environ.get('RDS_HOSTNAME')
+PORT = os.environ.get('RDS_PORT')
+DB_NAME = os.environ.get('RDS_DB_NAME')
+USERNAME = os.environ.get('RDS_USERNAME')
+PASSWORD = os.environ.get('RDS_PASSWORD')
 
-application.config['SQLALCHEMY_DATABASE_URI'] = driver \
-                                        + os.environ['RDS_USERNAME'] + ':' + os.environ['RDS_PASSWORD'] \
-                                        +'@' + os.environ['RDS_HOSTNAME']  +  ':' + os.environ['RDS_PORT'] \
-                                        + '/' + os.environ['RDS_DB_NAME']
+application.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://{}:{}@{}:{}/{}".format(USERNAME, PASSWORD, HOSTNAME, PORT, DB_NAME)
 
 db = SQLAlchemy(application)
 
 
 class User(db.Model):
+  __tablename__ = 'users'
+  
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(100))
   email = db.Column(db.String(100))
@@ -24,7 +27,8 @@ class User(db.Model):
   def __init__(self, name, email):
     self.name = name
     self.email = email
-
+	
+db.create_all()
 
 @application.route('/', methods=['GET'])
 def index():
@@ -37,8 +41,3 @@ def user():
   db.session.add(u)
   db.session.commit()
   return redirect(url_for('index'))
-
-if __name__ == '__main__':
-  db.create_all()
-  port = int(os.environ.get('PORT', 5000))
-  application.run(host='0.0.0.0', port=port, debug=True)
